@@ -9,6 +9,7 @@ function AdminDashboard() {
     const [items, setItems] = useState([]);
     const [contracts, setContracts] = useState([]);
     const [watchStats, setWatchStats] = useState(null);
+    const [watchActivities, setWatchActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -29,6 +30,10 @@ function AdminDashboard() {
 
         const watchResponse = await api.get('/admin/watch-stats');
         setWatchStats(watchResponse.data);
+
+        const activityResponse = await api.get('/admin/watch-activity');
+        setWatchActivities(activityResponse.data.activities);
+
       } catch (err) {
         console.error('Failed to load users:', err);
         setError('Unable to load member data.');
@@ -117,6 +122,24 @@ function AdminDashboard() {
   <>
     <p>{watchStats.watchedItems} Watched Items</p>
     <p>{watchStats.watchedContracts} Watched Contracts</p>
+
+<h3>Recent Watch Activity</h3>
+
+{watchActivities.length === 0 ? (
+  <p>No watch activity yet.</p>
+) : (
+  <ul>
+    {watchActivities.map((activity) => (
+      <li key={activity._id}>
+        {activity.user?.name || 'Unknown user'} watched{' '}
+        {activity.targetType === 'Item'
+          ? activity.targetId?.name || 'Unknown item'
+          : activity.targetId?.title || 'Unknown contract'}
+      </li>
+    ))}
+  </ul>
+)}
+
   </>
 ) : (
   <p>Watch activity unavailable.</p>
