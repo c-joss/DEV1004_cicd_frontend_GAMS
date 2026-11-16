@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Input from '../../components/forms/Input';
 import Button from '../../components/forms/Button';
 import api from '../../services/api';
 
 function AdminContractsPage() {
+const [contracts, setContracts] = useState([]);
+const [loadingContracts, setLoadingContracts] = useState(true);
+const [contractsError, setContractsError] = useState('');
   
 const [form, setForm] = useState({
   title: '',
@@ -17,6 +20,32 @@ const [form, setForm] = useState({
   description: '',
 });
 
+  
+useEffect(() => {
+  const fetchContracts = async () => {
+    try {
+      setLoadingContracts(true);
+      setContractsError('');
+
+      const response = await api.get('/contracts');
+
+      setContracts(
+        Array.isArray(response.data)
+          ? response.data
+          : Array.isArray(response.data.contracts)
+            ? response.data.contracts
+            : []
+      );
+    } catch (error) {
+      console.error('Failed to load contracts:', error);
+      setContractsError('Unable to load contracts.');
+    } finally {
+      setLoadingContracts(false);
+    }
+  };
+
+  fetchContracts();
+}, []);
 
   function handleChange(e) {
     setForm({
@@ -35,6 +64,16 @@ async function handleSubmit(e) {
       rewardAmount: Number(form.rewardAmount),
       maxAcceptances: Number(form.maxAcceptances),
     });
+    
+const response = await api.get('/contracts');
+
+setContracts(
+  Array.isArray(response.data)
+    ? response.data
+    : Array.isArray(response.data.contracts)
+      ? response.data.contracts
+      : []
+);
 
     alert('Contract saved successfully!');
   } catch (error) {
@@ -143,6 +182,38 @@ async function handleSubmit(e) {
 
         <Button type="submit">Save Contract</Button>
       </form>
+
+<h2>Existing Contracts</h2>
+
+{loadingContracts && <p>Loading contracts...</p>}
+
+{contractsError && <p role="alert">{contractsError}</p>}
+
+{!loadingContracts && !contractsError && contracts.length === 0 && (
+  <p>No contracts found.</p>
+)}
+
+{!loadingContracts && !contractsError && (
+  <div className="admin-user-list">
+    {contracts.map((contract) => (
+      <article className="admin-user-card" key={contract._id}>
+        <div>
+          <h3>{contract.title}</h3>
+          <p>Type: {contract.type}</p>
+          <p>Difficulty: {contract.difficulty}</p>
+          <p>Description: {contract.description}</p>
+        </div>
+
+        <div>
+          <p>Reward: {contract.rewardDescription}</p>
+          <p>Amount: ${contract.rewardAmount}</p>
+          <p>Places: {contract.maxAcceptances}</p>
+        </div>
+      </article>
+    ))}
+  </div>
+)}
+
     </section>
   );
 }
